@@ -1,5 +1,5 @@
 window.onload = init();
-
+//-------------- OL map --------------
 function init() {
   const map = new ol.Map({
     view: new ol.View({
@@ -21,7 +21,7 @@ function init() {
     condition: ol.events.condition.altKeyOnly,
   });
   map.addInteraction(dragRotateInteraction);
-
+// ------------ Naseljena Mjesta Layer ------------
   const naseljaStyle = new ol.style.Style({
     fill: new ol.style.Fill({
       color: "rgba(162, 162, 241, 0.27)",
@@ -39,22 +39,26 @@ function init() {
     }),
   });
 
-  const naselja = new ol.layer.Vector({
-    source: new ol.source.Vector({
-      url: "./naselja.geojson",
-      format: new ol.format.GeoJSON(),
-    }),
-    style: function (feature) {
-      const featureName = feature.get("name");
-      naseljaStyle
-        .getText()
-        .setText(featureName);
-      return [naseljaStyle];
-    },
-  });
+  const naseljaLayer = new ol.layer.Vector({
+  source: new ol.source.Vector({
+    url: "/naselja.geojson",
+    format: new ol.format.GeoJSON(),
+  }),
+  style: function (feature) {
+    const featureName = feature.get("name");
+    naseljaStyle.getText().setText(featureName);
+    return [naseljaStyle];
+  },
+});
+map.addLayer(naseljaLayer);
 
-  // naselja.
-  map.addLayer(naselja);
+const naseljaCheckbox = document.getElementById('naselja-layer');
+if (naseljaCheckbox) {
+  naseljaCheckbox.addEventListener('change', function () {
+    naseljaLayer.setVisible(this.checked);
+  });
+}
+
   let highlightedFeature = null;
 
   function getHighlightStyle(feature) {
@@ -70,13 +74,13 @@ function init() {
       text: new ol.style.Text({
         text: feature.get("name") || "",
         font: "bold 16px Arial",
-        fill: new ol.style.Fill({ color: "rgb(231, 18, 18)" }),
+        fill: new ol.style.Fill({ color: "rgb(206, 62, 62)" }),
         stroke: new ol.style.Stroke({ color: "#fff", width: 3 }),
         overflow: true,
       }),
     });
   }
-
+//------------ Hover effect ------------
   map.on("pointermove", function (evt) {
     let featureFound = false;
 
@@ -96,27 +100,117 @@ function init() {
       highlightedFeature.setStyle(null);
       highlightedFeature = null;
     }
+     
   });
+  const drawSource = new ol.source.Vector();
+  const drawLayer = new ol.layer.Vector({
+    source: drawSource,
+  });
+  map.addLayer(drawLayer);
 
-  map.on("click", function (evt) {
-    map.forEachFeatureAtPixel(evt.pixel, function (feature) {
-      const coordinates = feature.getGeometry().getCoordinates();
-      const name = feature.get("name");
-      const id = feature.id_;
-      console.log("feature: " , feature);
-      const message = `ID: ${id}, Name: ${name}`;
-      const overlay = new ol.Overlay({
-        element: document.getElementById("popup-coordinates"),
-        positioning: "bottom-center",
-        stopEvent: false,
-        autoPan: true,
-        autoPanAnimation: {
-          duration: 250,
-        },
+  let drawInteraction = null;
+
+// ------------ Polygon drawing  ------------
+  const drawBtn = document.getElementById('draw-polygon-btn');
+  if (drawBtn) {
+    drawBtn.addEventListener('click', function () {
+      if (drawInteraction) {
+        map.removeInteraction(drawInteraction);
+        drawInteraction = null;
+        drawBtn.textContent = 'Nacrtaj poligon';
+        return;
+      }
+      drawInteraction = new ol.interaction.Draw({
+        source: drawSource,
+        type: 'Polygon',
       });
-      overlay.setPosition(coordinates);
-      map.addOverlay(overlay);
-      document.getElementById("popup-coordinates").innerHTML = message;
-    });
+      map.addInteraction(drawInteraction);
+      drawBtn.textContent = 'Prekini crtanje';
+
+      drawInteraction.once('drawend', function (event) {
+  const feature = event.feature;
+  const polygon = feature.getGeometry();
+  const area = ol.sphere.getArea(polygon);
+
+  function handleChoice() {
+  const action = window.prompt(
+    `Šta želite uraditi sa poligonom?
+    1 - Izračunaj površinu
+    2 - Sačuvaj poligon kao GeoJSON
+    3 - Pokušaj ponovo
+    Unesite broj opcije (1, 2 ili 3):`
+  );
+
+  if (action === "1") {
+    alert('Površina poligona: ' + area.toFixed(2) + ' m²');
+    const keep = window.confirm("Želite li dati ime poligonu i sačuvati ga na mapi?\nOdaberite 'OK' za sačuvaj ili 'Cancel' za ukloni.");
+    if (keep) {
+      let name = "";
+      while (!name) {
+        name = window.prompt("Unesite ime za poligon:", "");
+        if (name === null) break;
+        if (!name) alert("Morate unijeti ime!");
+      }
+      if (name) {
+        feature.setProperties({ name: name });
+        alert("Poligon je sačuvan na mapi sa imenom: " + name);
+      } else {
+        drawSource.removeFeature(feature);
+        alert("Poligon je uklonjen.");
+      }
+    } else {
+      drawSource.removeFeature(feature);
+      alert("Poligon je uklonjen.");
+    }
+  } else if (action === "2") {
+    let name = "";
+    while (!name) {
+      name = window.prompt("Unesite ime za poligon:", "");
+      if (name === null) break;
+      if (!name) alert("Morate unijeti ime!");
+    }
+    if (name) {
+      feature.setProperties({ name: name });
+      const geojson = new ol.format.GeoJSON().writeFeature(feature, {
+        featureProjection: map.getView().getProjection()
+      });
+      const blob = new Blob([geojson], { type: "application/vnd.geo+json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = name + ".geojson";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      alert("Poligon je sačuvan kao GeoJSON.");
+    } else {
+      drawSource.removeFeature(feature);
+      alert("Poligon je uklonjen.");
+    }
+  } else if (action === "3") {
+    drawSource.removeFeature(feature);
+    alert("Pokušajte ponovo! Nacrtajte novi poligon.");
+  } else if (action !== null) {
+    alert("Nepoznata opcija. Pokušajte ponovo.");
+    handleChoice();
+    return;
+  }
+  const resetBtn = document.getElementById('reset-polygons-btn');
+if (resetBtn) {
+  resetBtn.addEventListener('click', function () {
+    drawSource.clear();
   });
+}
+  map.removeInteraction(drawInteraction);
+  drawInteraction = null;
+  drawBtn.textContent = 'Nacrtaj poligon';
+}
+handleChoice();
+
+      });
+    });
+  }
+
+  
 }

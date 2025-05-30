@@ -1,26 +1,121 @@
 * {
     box-sizing: border-box;
 }
-
 body {
     margin: 0;
     padding: 0;
-    position: relative;
-    display: flex;
-height: 100%;
+    display: block;
+    height: 100vh;
 }
-
+/* Map */
 .map {
-    height: 100%;
-    width: 50%;
-    border: 1px solid #11151a; 
-    box-shadow: 0 0 264px 0 rgba(0, 0, 0, 0.205);
-    overflow: hidden;
+    margin-left: 40px;
+    margin-top: 40px;
+    display: block;
+    height: 70vh;  
+    width: 60vw;    
+    max-width: 1200px;
+    max-height: 800px;
     background: #fff;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    padding: 16px 18px 16px 18px;
+    z-index: 1001;
+    font-family: 'Trebuchet MS', Arial, sans-serif;
+}
+/* Navigation */
+nav ul {
+    list-style: none;
+    padding-top: 12px;
+    padding-bottom: 12px;
+    font-family: 'Trebuchet MS';
+    margin-bottom: 40px;
+    margin-left: 40px;
+    margin-right: 80px;
+    display: flex;
+    gap: 5rem;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3) 
 }
 
-#popup-my {
-    position: relative;
-    padding: 20px;
-    width: 50%;
+nav ul li a {
+    text-decoration: none;
+    color: inherit;
+    transition: background 0.2s;
+    padding: 8px;
+}
+
+nav ul li a:hover {
+    background: #d3d2d2;
+    border-radius: 4px;
+    padding: 8px;
+}
+
+/* Header */
+.header-name {
+    margin-left: 40px;
+    margin-top: 20px;
+    font-size: 24px;
+    font-family: 'Trebuchet MS' ;
+    color: #11151a;
+}
+
+/* toolbox */
+.toolbox {
+  display: flex;
+  gap: 45px;
+  align-items: center;
+  padding: 10px 20px;
+  position: absolute;
+  margin-top: 10px;
+  margin-left: 40px;
+} 
+
+/* Toolbox buttons */
+.tool-btn {
+padding-top: 8px;
+padding-bottom: 8px;
+border: none; 
+font-size: 14px; 
+cursor: pointer; 
+box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3)
+}
+.tool-btn:hover {
+background-color: #c2c2c2; 
+transform: translateY(-2px);
+}
+
+.tool-btn:active {
+transform: translateY(0); 
+box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3); 
+}
+
+.tool-btn:disabled {
+background-color: #ccc; 
+color: #666; 
+cursor: not-allowed; 
+box-shadow: none; 
+}
+/* Layer menu */
+.layer-menu {
+  position: absolute;
+  top: 150px;
+  right: 290px;
+  width: 400px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+  padding: 16px 18px 16px 18px;
+  z-index: 1001;
+  font-family: 'Trebuchet MS', Arial, sans-serif;
+}
+.layer-menu h3 {
+  margin-top: 0;
+  font-size: 18px;
+  margin-bottom: 12px;
+}
+.layer-menu label {
+  margin-left: 6px;
+  font-size: 15px;
+}
+.layer-menu input[type="checkbox"] {
+  transform: scale(1.2);
 }
